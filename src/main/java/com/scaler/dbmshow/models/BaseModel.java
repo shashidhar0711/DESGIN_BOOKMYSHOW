@@ -1,10 +1,13 @@
 package com.scaler.dbmshow.models;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
-import lombok.Getter;
+
 
 import java.util.Date;
 
@@ -13,8 +16,10 @@ import java.util.Date;
 public class BaseModel {
 
     @Id
-    @GeneratedValue()
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+//    @CreationTimestamp
     private Date createdAt;
+//    @UpdateTimestamp
     private Date updatedAt;
 }

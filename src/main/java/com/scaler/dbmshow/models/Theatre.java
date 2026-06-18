@@ -1,6 +1,6 @@
 package com.scaler.dbmshow.models;
 
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import lombok.Data;
@@ -8,10 +8,11 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class Theater extends BaseModel{
+@Entity
+public class Theatre extends BaseModel{
     private String name;
     private String address;
-    @OneToMany
+    @OneToMany(mappedBy = "theatre")
     private List<Screen> screens;
     @ManyToOne
     private City city;

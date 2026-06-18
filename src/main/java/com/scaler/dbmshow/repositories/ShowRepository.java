@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface ShowRepository extends JpaRepository<Show, Integer> {
 
-    Optional<Show> findById(int showId);
+//    Optional<Show> findById(int showId);
 }

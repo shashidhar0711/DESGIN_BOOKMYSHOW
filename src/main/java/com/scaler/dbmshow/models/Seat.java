@@ -1,14 +1,14 @@
 package com.scaler.dbmshow.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
 @Entity
 public class Seat extends BaseModel {
     private String name;
-//    @Enumerated
+    @Enumerated
     private SeatType seatType;
+    @ManyToOne
+    private Screen screen;
 }

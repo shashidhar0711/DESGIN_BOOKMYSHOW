@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface ShowSeatTypeRepository extends JpaRepository<ShowSeatType, Integer> {
 
-    List<ShowSeatType> findAllByShow(int showId);
+//    List<ShowSeatType> findAllByShow(int showId);
 }
