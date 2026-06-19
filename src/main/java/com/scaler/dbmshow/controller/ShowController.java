@@ -5,9 +5,9 @@ import com.scaler.dbmshow.dtos.ShowRequestDto;
 import com.scaler.dbmshow.dtos.ShowResponseDto;
 import com.scaler.dbmshow.models.Show;
 import com.scaler.dbmshow.service.ShowService;
-import com.scaler.dbmshow.service.ShowServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,7 +22,7 @@ public class ShowController {
         this.showService = showService;
     }
     @PostMapping
-    public ShowResponseDto createShow(ShowRequestDto showRequestDto) {
+    public ShowResponseDto createShow(@RequestBody ShowRequestDto showRequestDto) {
         ShowResponseDto showResponseDto = new ShowResponseDto();
         try {
            Show show  = this.showService.createShow(showRequestDto);

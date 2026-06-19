@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface SeatRepository extends JpaRepository<Seat, Integer> {
-    List<Seat> findAllByScreenId(int screenId);
 
-//    List<Seat> findAllByIdIn(List<Integer> seatIds);
+    List<Seat> findAllByScreenId(int screenId);
+    List<Seat> findAllByIdIn(List<Integer> seatIds);
 }

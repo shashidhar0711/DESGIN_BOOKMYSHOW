@@ -1,5 +1,6 @@
 package com.scaler.dbmshow.service;
 
+import com.scaler.dbmshow.dtos.PriceConfigDto;
 import com.scaler.dbmshow.dtos.ShowRequestDto;
 import com.scaler.dbmshow.models.*;
 import com.scaler.dbmshow.repositories.*;
@@ -84,13 +85,13 @@ public class ShowServiceImpl implements ShowService {
         }
         this.showSeatRepository.saveAll(showSeats);
 
-        for(Pair<SeatType, Double> pair: showRequestDto.getPriceConfig()) {
-            SeatType first = pair.getFirst();
-            Double second = pair.getSecond();
+        for(PriceConfigDto priceConfigDtos: showRequestDto.getPriceConfig()) {
+            SeatType seatType = priceConfigDtos.getSeatType();
+            Double price = priceConfigDtos.getPrice();
             ShowSeatType showSeatType = new ShowSeatType();
             showSeatType.setShow(show);
-            showSeatType.setAmount(second);
-            showSeatType.setSeatType(first);
+            showSeatType.setAmount(price);
+            showSeatType.setSeatType(seatType);
 
             this.showSeatTypeRepository.save(showSeatType);
         }
