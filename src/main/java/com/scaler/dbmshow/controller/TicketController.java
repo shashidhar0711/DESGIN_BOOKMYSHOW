@@ -6,6 +6,7 @@ import com.scaler.dbmshow.dtos.ResponseType;
 import com.scaler.dbmshow.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -21,7 +22,7 @@ public class TicketController {
     }
 
     @PostMapping
-    public BookTicketResponseDto BookTicket(BookTicketRequestDto requestDto) {
+    public BookTicketResponseDto BookTicket(@RequestBody BookTicketRequestDto requestDto) {
         BookTicketResponseDto responseDto = new BookTicketResponseDto();
         try{
             validateRequest(requestDto);
