@@ -5,6 +5,7 @@ import com.scaler.dbmshow.dtos.CityResponseDto;
 import com.scaler.dbmshow.models.City;
 import com.scaler.dbmshow.service.CityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class CityController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public CityResponseDto createCity(
             @RequestBody CityRequestDto request) {
 
@@ -34,6 +36,7 @@ public class CityController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public CityResponseDto getCityById(
             @PathVariable int id) {
 
@@ -58,6 +61,7 @@ public class CityController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public CityResponseDto updateCity(
             @PathVariable int id,
             @RequestBody CityRequestDto request) {
@@ -71,6 +75,7 @@ public class CityController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteCity(
             @PathVariable int id) {
 

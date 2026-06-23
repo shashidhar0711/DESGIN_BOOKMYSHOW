@@ -5,6 +5,7 @@ import com.scaler.dbmshow.dtos.MovieResponseDto;
 import com.scaler.dbmshow.models.Movie;
 import com.scaler.dbmshow.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class MovieContoller {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public MovieResponseDto createMovie(@RequestBody MovieRequestDto movieRequestDto) {
         try {
             Movie movie = this.movieService.creatMovie(movieRequestDto);
@@ -32,6 +34,7 @@ public class MovieContoller {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public MovieResponseDto getMovieById(@PathVariable int id) {
         try {
             Movie movie = movieService.getMovieById(id);
@@ -54,6 +57,7 @@ public class MovieContoller {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public MovieResponseDto updateMovie(@PathVariable int id, @RequestBody MovieRequestDto movieRequestDto) {
         try {
             Movie movie = movieService.updateMovie(id, movieRequestDto);
@@ -65,6 +69,7 @@ public class MovieContoller {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteMovie(@PathVariable int id) {
         try {
             movieService.deleteMovie(id);

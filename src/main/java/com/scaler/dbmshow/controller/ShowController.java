@@ -6,6 +6,7 @@ import com.scaler.dbmshow.dtos.ShowResponseDto;
 import com.scaler.dbmshow.models.Show;
 import com.scaler.dbmshow.service.ShowService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,7 +19,9 @@ public class ShowController {
     public ShowController(ShowService showService) {
         this.showService = showService;
     }
+
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ShowResponseDto createShow(@RequestBody ShowRequestDto showRequestDto) {
         ShowResponseDto showResponseDto = new ShowResponseDto();
         try {
@@ -30,5 +33,4 @@ public class ShowController {
         }
         return showResponseDto;
     }
-
 }

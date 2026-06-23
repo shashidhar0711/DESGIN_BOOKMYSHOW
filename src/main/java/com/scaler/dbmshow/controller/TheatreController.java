@@ -5,6 +5,7 @@ import com.scaler.dbmshow.dtos.TheatreResponseDto;
 import com.scaler.dbmshow.models.Theatre;
 import com.scaler.dbmshow.service.TheatreService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public class TheatreController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public TheatreResponseDto createTheatre(
             @RequestBody TheatreRequestDto theatreRequestDto) {
 
@@ -37,6 +39,7 @@ public class TheatreController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public TheatreResponseDto getTheatreById(
             @PathVariable int id) {
 
@@ -66,6 +69,7 @@ public class TheatreController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public TheatreResponseDto updateTheatre(
             @PathVariable int id,
             @RequestBody TheatreRequestDto theatreRequestDto) {
@@ -84,6 +88,7 @@ public class TheatreController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteTheatre(
             @PathVariable int id) {
 

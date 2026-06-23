@@ -5,6 +5,7 @@ import com.scaler.dbmshow.dtos.ScreenResponseDto;
 import com.scaler.dbmshow.models.Screen;
 import com.scaler.dbmshow.service.ScreenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class ScreenController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ScreenResponseDto createScreen(@RequestBody ScreenRequestDto screenRequestDto) {
         try {
             Screen screen = screenService.create(screenRequestDto);
@@ -31,6 +33,7 @@ public class ScreenController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ScreenResponseDto getScreenById(@PathVariable int id) {
         try {
             Screen screen = screenService.getById(id);
@@ -54,6 +57,7 @@ public class ScreenController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ScreenResponseDto updateScreen(@PathVariable int id, @RequestBody ScreenRequestDto screenRequestDto) {
         try {
             Screen screen = screenService.update(id, screenRequestDto);
@@ -64,6 +68,7 @@ public class ScreenController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteScreen(@PathVariable int id) {
         try {
             screenService.delete(id);

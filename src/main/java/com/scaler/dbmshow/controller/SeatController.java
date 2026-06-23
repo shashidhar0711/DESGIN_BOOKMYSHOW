@@ -5,6 +5,7 @@ import com.scaler.dbmshow.dtos.SeatResponseDto;
 import com.scaler.dbmshow.models.Seat;
 import com.scaler.dbmshow.service.SeatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class SeatController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public SeatResponseDto createSeat(@RequestBody SeatRequestDto request) {
         try {
             Seat seat = seatService.createSeat(request);
@@ -31,6 +33,7 @@ public class SeatController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public SeatResponseDto getSeatById(@PathVariable int id) {
         try {
             Seat seat = seatService.getSeatById(id);
@@ -52,6 +55,7 @@ public class SeatController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public SeatResponseDto updateSeat(@PathVariable int id, @RequestBody SeatRequestDto request) {
         try {
             Seat seat = seatService.updateSeat(id, request);
@@ -62,6 +66,7 @@ public class SeatController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public String deleteSeat(@PathVariable int id) {
         try {
             seatService.deleteSeat(id);
