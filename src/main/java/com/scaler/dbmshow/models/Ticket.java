@@ -15,8 +15,7 @@ public class  Ticket extends BaseModel{
     private double totalAmount;
     @ManyToOne
     private Show show;
-    @ManyToOne
-    private User user;
+    private Long userId;
     @ManyToMany
     private List<Seat> seats;
     @Enumerated

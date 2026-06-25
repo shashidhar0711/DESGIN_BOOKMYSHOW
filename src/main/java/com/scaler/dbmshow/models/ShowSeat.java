@@ -15,6 +15,7 @@ public class ShowSeat extends BaseModel {
     private Seat seat;
     @Enumerated
     private SeatStatus seatStatus;
-    @ManyToOne
-    private User user;
+    private Long blockedByUserId;
+//    @ManyToOne
+//    private User user;
 }

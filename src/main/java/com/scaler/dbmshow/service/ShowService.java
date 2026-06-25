@@ -7,7 +7,7 @@ import com.scaler.dbmshow.models.ShowSeat;
 import java.util.List;
 
 public interface ShowService {
-    Show createShow(ShowRequestDto showRequestDto);
+    Show createShow(ShowRequestDto showRequestDto, Long userId);
 
 //    List<Show> getAllShowsByScreen(int screenId);
 //    List<Show> getAllShowsByTheatre(int theaterId);

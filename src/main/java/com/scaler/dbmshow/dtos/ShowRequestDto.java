@@ -9,10 +9,10 @@ import java.util.Date;
 import java.util.List;
 
 @Data
-public class ShowRequestDto {
+public class ShowRequestDto { //
     private int movieId;
     private int screenId;
-    private int userId;
+//    private int userId;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private Date startTime;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")

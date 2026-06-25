@@ -6,8 +6,7 @@ import com.scaler.dbmshow.models.Ticket;
 
 import java.util.List;
 
-public interface
-TicketService {
+public interface TicketService {
 
-    public Ticket bookTicket(List<Integer> seatIds, int showId, int userId) throws InvalidRequestException, UnAvailableSeatsException;
+    public Ticket bookTicket(List<Integer> seatIds, int showId, Long userId) throws InvalidRequestException, UnAvailableSeatsException;
 }

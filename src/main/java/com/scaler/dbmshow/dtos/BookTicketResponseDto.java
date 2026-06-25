@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class BookTicketResponseDto {
-    private Ticket ticket;
+    private TicketResponseDto ticket;
     private String errorMessage;
     private ResponseType responseType;
 

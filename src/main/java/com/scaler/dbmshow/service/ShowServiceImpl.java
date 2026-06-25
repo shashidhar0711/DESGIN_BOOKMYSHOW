@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 public class ShowServiceImpl implements ShowService {
 
-    private UserRepository userRepository;
+//    private UserRepository userRepository;
     private MovieRepository movieRepository;
     private ScreenRepository screenRepository;
     private ShowRepository showRepository;
@@ -23,14 +23,14 @@ public class ShowServiceImpl implements ShowService {
     private ShowSeatRepository showSeatRepository;
     private ShowSeatTypeRepository showSeatTypeRepository;
 
-    public ShowServiceImpl(UserRepository userRepository,
+    public ShowServiceImpl(
                            MovieRepository movieRepository,
                            ScreenRepository screenRepository,
                            ShowRepository showRepository,
                            SeatRepository seatRepository,
                            ShowSeatRepository showSeatRepository,
                            ShowSeatTypeRepository showSeatTypeRepository) {
-        this.userRepository = userRepository;
+//        this.userRepository = userRepository;
         this.movieRepository = movieRepository;
         this.screenRepository = screenRepository;
         this.showRepository = showRepository;
@@ -40,7 +40,7 @@ public class ShowServiceImpl implements ShowService {
     }
 
     @Override
-    public Show createShow(ShowRequestDto showRequestDto) {
+    public Show createShow(ShowRequestDto showRequestDto, Long userId) {
         // 1. Verify that the requested User exists and is authorized
         // 2. Confirm the Movie exists in the catalog
         // 3. Confirm the Physical Screen/Auditorium exists in the theatre
@@ -50,8 +50,8 @@ public class ShowServiceImpl implements ShowService {
         // 7. Generate and link dynamic ShowSeat instances to this specific showtime
         // 8. Map custom tier pricing (e.g., VIP, Premium, Normal) as provided by the administrator
         // 9. Commit and save the finalized ticket pricing rules for this show
-        User user = this.userRepository.findById(showRequestDto.getUserId())
-                .orElseThrow(() -> new RuntimeException("User does not exist!"));
+//        User user = this.userRepository.findById(showRequestDto.getUserId())
+//                .orElseThrow(() -> new RuntimeException("User does not exist!"));
 
         Movie movie = this.movieRepository.findById(showRequestDto.getMovieId())
                 .orElseThrow(() -> new RuntimeException("Movie not found"));
@@ -80,7 +80,7 @@ public class ShowServiceImpl implements ShowService {
             ShowSeat showSeat = new ShowSeat();
             showSeat.setShow(show);
             showSeat.setSeat(seat);
-            showSeat.setUser(user);
+            showSeat.setBlockedByUserId(userId);
             showSeat.setSeatStatus(SeatStatus.AVAILABLE);
             showSeats.add(showSeat);
         }

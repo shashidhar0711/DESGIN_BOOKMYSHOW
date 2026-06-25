@@ -6,5 +6,5 @@ import java.util.List;
 public class BookTicketRequestDto {
     private List<Integer> seatIds;
     private int showId;
-    private int userId;
+//    private int userId;
 }
