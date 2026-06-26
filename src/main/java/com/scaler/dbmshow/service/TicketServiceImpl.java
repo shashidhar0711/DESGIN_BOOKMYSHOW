@@ -140,6 +140,7 @@ public class TicketServiceImpl implements TicketService{
     }
 
     @Override
+    @Transactional
     public void confirmBooking(int ticketId) {
         Ticket ticket = this.ticketRepository.findById(ticketId).orElseThrow();
         ticket.setTicketStatus(TicketStatus.PAID);
