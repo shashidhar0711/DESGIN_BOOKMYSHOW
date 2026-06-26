@@ -38,7 +38,8 @@ public class SecurityConfig {
                                 "/test",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/tickets/internal/**"
                         ).permitAll()
 
                         // Everything else requires JWT

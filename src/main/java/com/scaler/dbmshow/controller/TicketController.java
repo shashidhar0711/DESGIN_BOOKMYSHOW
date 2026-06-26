@@ -1,20 +1,18 @@
 package com.scaler.dbmshow.controller;
 
-import com.scaler.dbmshow.dtos.BookTicketRequestDto;
-import com.scaler.dbmshow.dtos.BookTicketResponseDto;
-import com.scaler.dbmshow.dtos.ResponseType;
-import com.scaler.dbmshow.dtos.TicketResponseDto;
+import com.scaler.dbmshow.dtos.*;
+import com.scaler.dbmshow.exceptions.InvalidRequestException;
+import com.scaler.dbmshow.exceptions.UnAvailableSeatsException;
 import com.scaler.dbmshow.models.Seat;
 import com.scaler.dbmshow.models.Ticket;
 import com.scaler.dbmshow.security.JwtUserDto;
 import com.scaler.dbmshow.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.sql.PreparedStatement;
 import java.util.List;
 
 @RestController
@@ -29,43 +27,65 @@ public class TicketController {
     }
 
     @PostMapping
-    public BookTicketResponseDto BookTicket(@RequestBody BookTicketRequestDto requestDto,
-                                            Authentication authentication) {
-
-        BookTicketResponseDto responseDto = new BookTicketResponseDto();
-
-        try {
+    public BookTicketResultDto BookTicket(@RequestBody BookTicketRequestDto requestDto,
+                                            Authentication authentication) throws InvalidRequestException, UnAvailableSeatsException {
+//        BookTicketResponseDto responseDto = new BookTicketResponseDto();
             JwtUserDto user = (JwtUserDto) authentication.getPrincipal();
-
             validateRequest(requestDto);
-
-            Ticket ticket = this.ticketService.bookTicket(
+            BookTicketResultDto result = this.ticketService.bookTicket(
                     requestDto.getSeatIds(),
                     requestDto.getShowId(),
                     user.getUserId()
             );
+//        try {
+            result.setResponseType(ResponseType.SUCCESS);
+            return result;
+//        } catch (Exception e) {
+//            result.setResponseType(ResponseType.FAILURE);
+////            result.setErrorMessage(e.getMessage());
+//        }
+//            TicketResponseDto ticketResponseDto = new TicketResponseDto();
+//            ticketResponseDto.setTicketId(ticket.getId());
+//            ticketResponseDto.setTotalAmount(ticket.getTotalAmount());
+//            ticketResponseDto.setTicketStatus(ticket.getTicketStatus());
+//            List<String> seatNames = ticket.getSeats()
+//                    .stream()
+//                    .map(Seat::getName)
+//                    .toList();
+//            ticketResponseDto.setSeatNames(seatNames);
+//            responseDto.setTicket(ticketResponseDto);
+//            responseDto.setResponseType(ResponseType.SUCCESS);
+//        } catch (Exception e) {
+//            responseDto.setResponseType(ResponseType.FAILURE);
+//            responseDto.setErrorMessage(e.getMessage());
+//        }
 
-            TicketResponseDto ticketResponseDto = new TicketResponseDto();
-            ticketResponseDto.setTicketId(ticket.getId());
-            ticketResponseDto.setTotalAmount(ticket.getTotalAmount());
-            ticketResponseDto.setTicketStatus(ticket.getTicketStatus());
+    }
 
-            List<String> seatNames = ticket.getSeats()
-                    .stream()
-                    .map(Seat::getName)
-                    .toList();
-
-            ticketResponseDto.setSeatNames(seatNames);
-
-            responseDto.setTicket(ticketResponseDto);
-            responseDto.setResponseType(ResponseType.SUCCESS);
-
+    @GetMapping("/internal/{ticketId}")
+    public TicketResponseDto getTicketDetails(@PathVariable int ticketId) {
+        TicketResponseDto ticketResponseDto = new TicketResponseDto();
+        try {
+            Ticket ticketDetails = this.ticketService.getTicketDetails(ticketId);
+            ticketResponseDto.setTicketId(ticketDetails.getId());
+            ticketResponseDto.setTicketStatus(ticketDetails.getTicketStatus());
+            ticketResponseDto.setTotalAmount(ticketDetails.getTotalAmount());
         } catch (Exception e) {
-            responseDto.setResponseType(ResponseType.FAILURE);
-            responseDto.setErrorMessage(e.getMessage());
+            e.printStackTrace();
         }
 
-        return responseDto;
+        return ticketResponseDto;
+    }
+
+    @PostMapping("/internal/payment-success")
+    public ResponseEntity<Void> paymentSuccess(
+            @RequestBody PaymentSucessRequestDto requestDto) {
+
+        ticketService.confirmBooking(
+                requestDto.getTicketId()
+        );
+
+        return ResponseEntity.ok().build();
     }
 
     private void validateRequest(BookTicketRequestDto requestDto) {
@@ -79,4 +99,7 @@ public class TicketController {
             throw new RuntimeException("Show id seems to be invalid");
         }
     }
+
 }
+
+

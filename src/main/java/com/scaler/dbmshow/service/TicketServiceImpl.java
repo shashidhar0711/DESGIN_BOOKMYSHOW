@@ -1,13 +1,14 @@
 package com.scaler.dbmshow.service;
 
-import com.scaler.dbmshow.exceptions.InvalidRequestException;
-import com.scaler.dbmshow.exceptions.UnAvailableSeatsException;
+import com.scaler.dbmshow.dtos.*;
 import com.scaler.dbmshow.models.*;
 import com.scaler.dbmshow.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -27,24 +28,28 @@ public class TicketServiceImpl implements TicketService{
     @Autowired
     private TicketRepository ticketRepository;
 
+    private RestTemplate restTemplate;
+
     @Autowired
-    @org.springframework.context.annotation.Lazy
+    @Lazy
     private TicketServiceImpl self;
 
     public TicketServiceImpl(ShowRepository showRepository,
                              ShowSeatRepository showSeatRepository,
                              SeatRepository seatRepository,
                              ShowSeatTypeRepository showSeatTypeRepository,
-                             TicketRepository ticketRepository) {
+                             TicketRepository ticketRepository,
+                             RestTemplate restTemplate) {
         this.showRepository = showRepository;
         this.showSeatRepository = showSeatRepository;
         this.seatRepository = seatRepository;
         this.showSeatTypeRepository = showSeatTypeRepository;
         this.ticketRepository = ticketRepository;
+        this.restTemplate = restTemplate;
     }
 
     @Override
-    public Ticket bookTicket(List<Integer> seatIds, int showId, Long userId) {
+    public BookTicketResultDto bookTicket(List<Integer> seatIds, int showId, Long userId) {
         // ShowID exist or not
         // userId exist or not
         // validation the start time and end time + 10 minutes before show time
@@ -56,8 +61,6 @@ public class TicketServiceImpl implements TicketService{
 
 //        User user = this.userRepository.findById(userId)
 //                .orElseThrow(() -> new RuntimeException("User not found!"));
-
-
 
         Show show = this.showRepository.findById(showId)
                 .orElseThrow(() -> new RuntimeException("Show is not found!"));
@@ -99,14 +102,83 @@ public class TicketServiceImpl implements TicketService{
         ticket.setSeats(allSeatsByIdIn);
         ticket.setTotalAmount(totalAmount);
 
-        Ticket savedToken  = this.ticketRepository.save(ticket);
+        Ticket savedTicket  = this.ticketRepository.save(ticket);
 
 
         // after save, call to payment service by passing ticketid
-        //
+        CreatePaymentResponseDto paymentResponseDto = createPayment(savedTicket);
 
 
-        return savedToken;
+        // create response dto
+        BookTicketResultDto resultDto = new BookTicketResultDto();
+
+        TicketResponseDto ticketResponseDto = new TicketResponseDto();
+        ticketResponseDto.setTicketId(savedTicket.getId());
+        ticketResponseDto.setTotalAmount(savedTicket.getTotalAmount());
+        ticketResponseDto.setTicketStatus(savedTicket.getTicketStatus());
+        List<String> seatNames = savedTicket.getSeats()
+                        .stream()
+                        .map(Seat::getName)
+                        .toList();
+        ticketResponseDto.setSeatNames(seatNames);
+//        ticketResponseDto.setResponseType(ResponseType.SUCCESS);
+
+
+
+        resultDto.setTicket(ticketResponseDto);
+
+        resultDto.setPayment(paymentResponseDto);
+
+
+        return resultDto;
+    }
+
+    @Override
+    public Ticket getTicketDetails(int ticketId) {
+        return this.ticketRepository.findById(ticketId).orElseThrow(
+                ()-> new RuntimeException("Ticket:"+ticketId+" is not available!"));
+    }
+
+    @Override
+    public void confirmBooking(int ticketId) {
+        Ticket ticket = this.ticketRepository.findById(ticketId).orElseThrow();
+        ticket.setTicketStatus(TicketStatus.PAID);
+
+        List<Integer> seatIds = ticket.getSeats()
+                .stream()
+                .map(Seat::getId)
+                .toList();
+
+        List<ShowSeat> showSeats =
+                showSeatRepository.findAllByShow_IdAndSeat_IdInAndSeatStatus(
+                        ticket.getShow().getId(),
+                        seatIds,
+                        SeatStatus.BLOCKED
+                );
+
+        if(showSeats.size() != seatIds.size()) {
+            throw new RuntimeException("Some seats are not blocked");
+        }
+
+        showSeats.forEach(showSeat -> {
+            showSeat.setSeatStatus(SeatStatus.BOOKED);
+        });
+
+        showSeatRepository.saveAll(showSeats);
+        ticketRepository.save(ticket);
+    }
+
+    private CreatePaymentResponseDto createPayment(Ticket ticket) {
+        CreatePaymentRequestDto request = new CreatePaymentRequestDto();
+        request.setTicketId(ticket.getId());
+
+        CreatePaymentResponseDto createPaymentResponseDto = this.restTemplate.postForObject(
+                "http://localhost:8082/payments/",
+                request,
+                CreatePaymentResponseDto.class
+        );
+
+        return createPaymentResponseDto;
     }
 
     // critical section or method
