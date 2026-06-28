@@ -4,7 +4,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
-import tools.jackson.core.ObjectReadContext;
 
 @Data
 @Entity

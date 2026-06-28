@@ -2,6 +2,7 @@ package com.scaler.dbmshow.service;
 
 import com.scaler.dbmshow.dtos.PriceConfigDto;
 import com.scaler.dbmshow.dtos.ShowRequestDto;
+import com.scaler.dbmshow.exceptions.ResourceNotFoundException;
 import com.scaler.dbmshow.models.*;
 import com.scaler.dbmshow.repositories.*;
 import org.springframework.data.util.Pair;
@@ -40,7 +41,7 @@ public class ShowServiceImpl implements ShowService {
     }
 
     @Override
-    public Show createShow(ShowRequestDto showRequestDto, Long userId) {
+    public Show createShow(ShowRequestDto showRequestDto, Long userId) throws ResourceNotFoundException {
         // 1. Verify that the requested User exists and is authorized
         // 2. Confirm the Movie exists in the catalog
         // 3. Confirm the Physical Screen/Auditorium exists in the theatre
@@ -54,10 +55,10 @@ public class ShowServiceImpl implements ShowService {
 //                .orElseThrow(() -> new RuntimeException("User does not exist!"));
 
         Movie movie = this.movieRepository.findById(showRequestDto.getMovieId())
-                .orElseThrow(() -> new RuntimeException("Movie not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
 
         Screen screen = this.screenRepository.findById(showRequestDto.getScreenId())
-                .orElseThrow(() -> new RuntimeException("Screen does not exist!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Screen does not exist!"));
 
         Date now = new Date();
         if(showRequestDto.getStartTime().before(now)) {
@@ -98,4 +99,11 @@ public class ShowServiceImpl implements ShowService {
         }
         return show;
     }
+
+    @Override
+    public Show getShowById(int showId) throws ResourceNotFoundException {
+        return showRepository.findById(showId)
+                .orElseThrow(() -> new ResourceNotFoundException("Show not found."));
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.scaler.dbmshow.service;
 
 import com.scaler.dbmshow.dtos.TheatreRequestDto;
+import com.scaler.dbmshow.exceptions.ResourceNotFoundException;
 import com.scaler.dbmshow.models.City;
 import com.scaler.dbmshow.models.Theatre;
 import com.scaler.dbmshow.repositories.CityRepository;
@@ -23,10 +24,10 @@ public class TheatreServiceImpl implements TheatreService{
     }
 
     @Override
-    public Theatre create(TheatreRequestDto request) {
+    public Theatre create(TheatreRequestDto request) throws ResourceNotFoundException {
 
         City city = this.cityRepository.findById(request.getCityId())
-                            .orElseThrow(() -> new RuntimeException("City not found!"));
+                            .orElseThrow(() -> new ResourceNotFoundException("City not found!"));
 
         Theatre theatre = new Theatre();
         theatre.setName(request.getName());
@@ -49,9 +50,9 @@ public class TheatreServiceImpl implements TheatreService{
     }
 
     @Override
-    public Theatre update(int id, TheatreRequestDto request) {
+    public Theatre update(int id, TheatreRequestDto request) throws ResourceNotFoundException {
         City city = this.cityRepository.findById(request.getCityId())
-                .orElseThrow(() -> new RuntimeException("City not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("City not found!"));
 
         Theatre theatre = new Theatre();
         theatre.setName(request.getName());

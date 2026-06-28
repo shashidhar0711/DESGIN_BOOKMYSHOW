@@ -1,6 +1,7 @@
 package com.scaler.dbmshow.service;
 
 import com.scaler.dbmshow.dtos.ScreenRequestDto;
+import com.scaler.dbmshow.exceptions.ResourceNotFoundException;
 import com.scaler.dbmshow.models.Screen;
 import com.scaler.dbmshow.models.Theatre;
 import com.scaler.dbmshow.repositories.ScreenRepository;
@@ -25,9 +26,9 @@ public class ScreenServiceImpl implements ScreenService{
     }
 
     @Override
-    public Screen create(ScreenRequestDto request) {
+    public Screen create(ScreenRequestDto request) throws ResourceNotFoundException {
         Theatre theatre = theatreRepository.findById(request.getTheatreId())
-                .orElseThrow(() -> new RuntimeException("Theatre not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Theatre not found"));
         Screen screen = new Screen();
         screen.setName(request.getName());
         screen.setTheatre(theatre);
@@ -35,10 +36,10 @@ public class ScreenServiceImpl implements ScreenService{
     }
 
     @Override
-    public Screen getById(int id) {
+    public Screen getById(int id) throws ResourceNotFoundException {
         return screenRepository.findById(id)
                 .orElseThrow(() ->
-                        new RuntimeException(
+                        new ResourceNotFoundException(
                                 "Screen not found"));
     }
 
@@ -48,7 +49,7 @@ public class ScreenServiceImpl implements ScreenService{
     }
 
     @Override
-    public Screen update(int id, ScreenRequestDto request) {
+    public Screen update(int id, ScreenRequestDto request) throws ResourceNotFoundException {
         Screen screen = getById(id);
         screen.setName(request.getName());
 
@@ -61,7 +62,7 @@ public class ScreenServiceImpl implements ScreenService{
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(int id) throws ResourceNotFoundException {
         Screen screen = getById(id);
         screenRepository.delete(screen);
     }

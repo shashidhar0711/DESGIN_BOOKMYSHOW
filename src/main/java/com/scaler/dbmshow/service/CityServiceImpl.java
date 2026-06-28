@@ -1,6 +1,7 @@
 package com.scaler.dbmshow.service;
 
 import com.scaler.dbmshow.dtos.CityRequestDto;
+import com.scaler.dbmshow.exceptions.ResourceNotFoundException;
 import com.scaler.dbmshow.models.City;
 import com.scaler.dbmshow.repositories.CityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +27,9 @@ public class CityServiceImpl implements CityService{
     }
 
     @Override
-    public City getById(int id) {
+    public City getById(int id) throws ResourceNotFoundException {
         return cityRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("City not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("City not found"));
     }
 
     @Override
@@ -37,14 +38,14 @@ public class CityServiceImpl implements CityService{
     }
 
     @Override
-    public City update(int id, CityRequestDto request) {
+    public City update(int id, CityRequestDto request) throws ResourceNotFoundException {
         City city = getById(id);
         city.setName(request.getName());
         return cityRepository.save(city);
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(int id) throws ResourceNotFoundException {
         City city = getById(id);
         cityRepository.delete(city);
     }

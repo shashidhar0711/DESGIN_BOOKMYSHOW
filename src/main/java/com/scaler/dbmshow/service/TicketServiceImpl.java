@@ -1,6 +1,9 @@
 package com.scaler.dbmshow.service;
 
+import com.scaler.dbmshow.PricingStrategy.PricingStrategy;
+import com.scaler.dbmshow.PricingStrategy.PricingStrategyFactory;
 import com.scaler.dbmshow.dtos.*;
+import com.scaler.dbmshow.exceptions.*;
 import com.scaler.dbmshow.models.*;
 import com.scaler.dbmshow.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,8 @@ public class TicketServiceImpl implements TicketService{
     private TicketRepository ticketRepository;
 
     private RestTemplate restTemplate;
+    private SeatLockService seatLockService;
+    private PricingStrategyFactory pricingStrategyFactory;
 
     @Autowired
     @Lazy
@@ -39,17 +44,21 @@ public class TicketServiceImpl implements TicketService{
                              SeatRepository seatRepository,
                              ShowSeatTypeRepository showSeatTypeRepository,
                              TicketRepository ticketRepository,
-                             RestTemplate restTemplate) {
+                             RestTemplate restTemplate,
+                             SeatLockService seatLockService,
+                             PricingStrategyFactory pricingStrategyFactory) {
         this.showRepository = showRepository;
         this.showSeatRepository = showSeatRepository;
         this.seatRepository = seatRepository;
         this.showSeatTypeRepository = showSeatTypeRepository;
         this.ticketRepository = ticketRepository;
         this.restTemplate = restTemplate;
+        this.seatLockService = seatLockService;
+        this.pricingStrategyFactory = pricingStrategyFactory;
     }
 
     @Override
-    public BookTicketResultDto bookTicket(List<Integer> seatIds, int showId, Long userId) {
+    public BookTicketResultDto bookTicket(List<Integer> seatIds, int showId, Long userId) throws SeatAlreadyBookedException, ResourceNotFoundException, ShowCannotBeBookedException, UnableToCreatePaymentLinkException, UnAvailableSeatsException {
         // ShowID exist or not
         // userId exist or not
         // validation the start time and end time + 10 minutes before show time
@@ -63,23 +72,25 @@ public class TicketServiceImpl implements TicketService{
 //                .orElseThrow(() -> new RuntimeException("User not found!"));
 
         Show show = this.showRepository.findById(showId)
-                .orElseThrow(() -> new RuntimeException("Show is not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Show is not found!"));
 
         // validation show can be booked?
         Long currentTime = new Date().getTime();
         long tenMinutes = 10 * 60 * 1000;
         if(show.getStartTime().getTime()+tenMinutes < currentTime) {
-            throw new RuntimeException("This show cannot be booked. time over!!!");
+            throw new ShowCannotBeBookedException("This show cannot be booked. time over!!!");
         }
-
         // check all the seats part of show
         List<Seat> allSeatsByIdIn = this.seatRepository.findAllByIdIn(seatIds);
         if(allSeatsByIdIn.size() != seatIds.size()) {
-            throw new RuntimeException("Seats are invalid");
+            throw new UnAvailableSeatsException("Seats are not available, seems invalid!");
         }
 
-        // if seats present, now check available and block by applying lock
-        self.BlockSeatForUser(seatIds, show, userId);
+//        // if seats present, now check available and block by applying lock
+//        self.BlockSeatForUser(seatIds, show, userId);
+
+        // Lock Seats using Redis
+        this.seatLockService.lockSeat(showId, seatIds, userId.intValue());
 
         List<ShowSeatType> allByShowId = this.showSeatTypeRepository.findAllByShowId(showId);
         Map<SeatType, Double> pricingMap = new HashMap<>();
@@ -94,20 +105,39 @@ public class TicketServiceImpl implements TicketService{
             totalAmount += pricingMap.get(seat.getSeatType());
         }
 
+        // apply strategy here
+        PricingResultFinalDto pricing = new PricingResultFinalDto();
+        pricing.setBaseAmount(totalAmount);
+        pricing.setTotalAmount(totalAmount);
+
+        for (PricingStrategy strategy : pricingStrategyFactory.getStrategies()) {
+            strategy.apply(pricing);
+        }
+
         // create a ticket
         Ticket ticket = new Ticket();
         ticket.setTicketStatus(TicketStatus.UNPAID);
         ticket.setUserId(userId);
         ticket.setShow(show);
         ticket.setSeats(allSeatsByIdIn);
-        ticket.setTotalAmount(totalAmount);
+        ticket.setTotalAmount(pricing.getTotalAmount());
 
         Ticket savedTicket  = this.ticketRepository.save(ticket);
 
+        CreatePaymentResponseDto paymentResponseDto;
+        try {
+            // after save, call to payment service by passing ticketid
+            paymentResponseDto = createPayment(savedTicket);
+        } catch (Exception e) {
 
-        // after save, call to payment service by passing ticketid
-        CreatePaymentResponseDto paymentResponseDto = createPayment(savedTicket);
+            // Release Redis Lock
+            seatLockService.unlockSeats(showId, seatIds);
 
+            // Optional: delete the ticket
+            this.ticketRepository.delete(savedTicket);
+
+            throw new UnableToCreatePaymentLinkException("Unable to create payment link.");
+        }
 
         // create response dto
         BookTicketResultDto resultDto = new BookTicketResultDto();
@@ -121,27 +151,22 @@ public class TicketServiceImpl implements TicketService{
                         .map(Seat::getName)
                         .toList();
         ticketResponseDto.setSeatNames(seatNames);
-//        ticketResponseDto.setResponseType(ResponseType.SUCCESS);
-
-
 
         resultDto.setTicket(ticketResponseDto);
-
         resultDto.setPayment(paymentResponseDto);
-
 
         return resultDto;
     }
 
     @Override
-    public Ticket getTicketDetails(int ticketId) {
+    public Ticket getTicketDetails(int ticketId) throws ResourceNotFoundException {
         return this.ticketRepository.findById(ticketId).orElseThrow(
-                ()-> new RuntimeException("Ticket:"+ticketId+" is not available!"));
+                ()-> new ResourceNotFoundException("Ticket:"+ticketId+" is not available!"));
     }
 
     @Override
     @Transactional
-    public void confirmBooking(int ticketId) {
+    public void confirmBooking(int ticketId) throws UnAvailableSeatsException {
         Ticket ticket = this.ticketRepository.findById(ticketId).orElseThrow();
         ticket.setTicketStatus(TicketStatus.PAID);
 
@@ -154,11 +179,11 @@ public class TicketServiceImpl implements TicketService{
                 showSeatRepository.findAllByShow_IdAndSeat_IdInAndSeatStatus(
                         ticket.getShow().getId(),
                         seatIds,
-                        SeatStatus.BLOCKED
+                        SeatStatus.AVAILABLE
                 );
 
         if(showSeats.size() != seatIds.size()) {
-            throw new RuntimeException("Some seats are not blocked");
+            throw new UnAvailableSeatsException("Some seats are not blocked");
         }
 
         showSeats.forEach(showSeat -> {
@@ -167,6 +192,12 @@ public class TicketServiceImpl implements TicketService{
 
         showSeatRepository.saveAll(showSeats);
         ticketRepository.save(ticket);
+        // Remove Redis Lock
+        seatLockService.unlockSeats(
+                ticket.getShow().getId(),
+                seatIds
+        );
+
     }
 
     private CreatePaymentResponseDto createPayment(Ticket ticket) {
@@ -185,12 +216,7 @@ public class TicketServiceImpl implements TicketService{
     // critical section or method
     // this method is transactional. it mean i will run all as one or nothing
     @Transactional(isolation = Isolation.SERIALIZABLE)
-    public void BlockSeatForUser(List<Integer> seatIds, Show show, Long userId) {
-//        List<ShowSeat> allByShowIdAndSeatIdsInAndSeatStatusAvailable = this.showSeatRepository.findAllByShowIdAndSeatIdsInAndSeatStatus_Available(show.getId(), seatIds, SeatStatus.AVAILABLE);
-//        List<ShowSeat> allByShowIdAndSeatIdsInAndSeatStatusAvailable = this.showSeatRepository.findAllByShow_IdAndSeat_IdInAndSeatStatus(show.getId(), seatIds, SeatStatus.AVAILABLE);
-
-//        List<ShowSeat> allByShowIdAndSeatIdsInAndSeatStatusAvailable = this.showSeatRepository.findAllByShowIdAndSeatIdInAndSeatStatus(show.getId(), seatIds, SeatStatus.AVAILABLE);
-
+    public void BlockSeatForUser(List<Integer> seatIds, Show show, Long userId) throws UnAvailableSeatsException {
         List<ShowSeat> allByShowIdAndSeatIdsInAndSeatStatusAvailable =
                 showSeatRepository.findAllByShow_IdAndSeat_IdInAndSeatStatus(
                         show.getId(),
@@ -199,7 +225,7 @@ public class TicketServiceImpl implements TicketService{
                 );
 
         if(allByShowIdAndSeatIdsInAndSeatStatusAvailable.size() != seatIds.size()) {
-            throw new RuntimeException("Some or all seats are not available");
+            throw new UnAvailableSeatsException("Some or all seats are not available");
         }
 
         allByShowIdAndSeatIdsInAndSeatStatusAvailable.stream().forEach(currSeat -> {

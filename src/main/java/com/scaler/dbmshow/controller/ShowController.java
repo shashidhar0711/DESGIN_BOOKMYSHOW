@@ -29,12 +29,60 @@ public class ShowController {
         ShowResponseDto showResponseDto = new ShowResponseDto();
         try {
             JwtUserDto user = (JwtUserDto) authentication.getPrincipal();
-           Show show  = this.showService.createShow(showRequestDto, user.getUserId());
-           showResponseDto.setShow(show);
-           showResponseDto.setResponseType(ResponseType.SUCCESS);
+            Show show  = this.showService.createShow(showRequestDto, user.getUserId());
+            showResponseDto.setResponseType(ResponseType.SUCCESS);
+
+            showResponseDto.setShowId(show.getId());
+
+            showResponseDto.setMovieId(show.getMovie().getId());
+            showResponseDto.setMovieName(show.getMovie().getName());
+
+            showResponseDto.setScreenId(show.getScreen().getId());
+            showResponseDto.setScreenName(show.getScreen().getName());
+
+            showResponseDto.setTheatreId(show.getScreen().getTheatre().getId());
+            showResponseDto.setTheatreName(show.getScreen().getTheatre().getName());
+
+            showResponseDto.setStartTime(show.getStartTime());
+            showResponseDto.setEndTime(show.getEndTime());
         } catch(Exception e) {
             showResponseDto.setErrorMessage(e.getMessage());
         }
         return showResponseDto;
     }
+
+    @GetMapping("/{showId}")
+    public ShowResponseDto getShowById(
+            @PathVariable int showId) {
+
+
+        ShowResponseDto response = new ShowResponseDto();
+
+        try {
+            Show show = showService.getShowById(showId);
+
+            response.setResponseType(ResponseType.SUCCESS);
+
+            response.setShowId(show.getId());
+
+            response.setMovieId(show.getMovie().getId());
+            response.setMovieName(show.getMovie().getName());
+
+            response.setScreenId(show.getScreen().getId());
+            response.setScreenName(show.getScreen().getName());
+
+            response.setTheatreId(show.getScreen().getTheatre().getId());
+            response.setTheatreName(show.getScreen().getTheatre().getName());
+
+            response.setStartTime(show.getStartTime());
+            response.setEndTime(show.getEndTime());
+
+        } catch (Exception e) {
+            response.setResponseType(ResponseType.FAILURE);
+            response.setErrorMessage(e.getMessage());
+        }
+
+        return  response;
+    }
+
 }

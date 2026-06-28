@@ -2,9 +2,11 @@ package com.scaler.dbmshow.service;
 
 import com.scaler.dbmshow.dtos.MovieRequestDto;
 import com.scaler.dbmshow.dtos.MovieResponseDto;
+import com.scaler.dbmshow.exceptions.ResourceNotFoundException;
 import com.scaler.dbmshow.models.Movie;
 import com.scaler.dbmshow.repositories.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,14 +16,41 @@ public class MovieServiceImpl implements MovieService{
 
     @Autowired
     private MovieRepository movieRepository;
+    private RedisTemplate redisTemplate;
 
-    public MovieServiceImpl(MovieRepository movieRepository) {
+    public MovieServiceImpl(MovieRepository movieRepository,
+                            RedisTemplate redisTemplate) {
         this.movieRepository = movieRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
-    public Movie getMovieById(int id) {
-        return this.movieRepository.findById(id).orElseThrow(() -> new RuntimeException("Movies not Found"));
+    public Movie getMovieById(int id) throws ResourceNotFoundException {
+        String key = "movie:" + id;
+
+        try {
+            Movie movie = (Movie) redisTemplate.opsForValue().get(key);
+
+            if (movie != null) {
+                System.out.println("Movie fetched from Redis");
+                return movie;
+            }
+        } catch (Exception e) {
+            System.out.println("Redis unavailable. Fetching from DB.");
+        }
+
+        Movie movie = this.movieRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));
+
+        try {
+            redisTemplate.opsForValue().set(key, movie);
+            System.out.println("Movie cached in Redis");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Unable to cache movie");
+        }
+
+        return movie;
     }
 
     @Override
@@ -43,7 +72,7 @@ public class MovieServiceImpl implements MovieService{
     }
 
     @Override
-    public void deleteMovie(int id) {
+    public void deleteMovie(int id) throws ResourceNotFoundException {
         // get the movie by calling getByMovieById() method
         // delete it and return it
         Movie byMovieById = getMovieById(id);
@@ -51,7 +80,7 @@ public class MovieServiceImpl implements MovieService{
     }
 
     @Override
-    public Movie updateMovie(int id, MovieRequestDto request) {
+    public Movie updateMovie(int id, MovieRequestDto request) throws ResourceNotFoundException {
         // get the movie by calling getByMovieById() method
         // update with same and save it to db
         // return it

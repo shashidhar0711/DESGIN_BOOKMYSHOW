@@ -1,6 +1,7 @@
 package com.scaler.dbmshow.service;
 
 import com.scaler.dbmshow.dtos.SeatRequestDto;
+import com.scaler.dbmshow.exceptions.ResourceNotFoundException;
 import com.scaler.dbmshow.models.Movie;
 import com.scaler.dbmshow.models.Screen;
 import com.scaler.dbmshow.models.Seat;
@@ -25,8 +26,8 @@ public class SeatServiceImpl implements SeatService{
     }
 
     @Override
-    public Seat getSeatById(int id) {
-        return this.seatRepository.findById(id).orElseThrow(()-> new RuntimeException("Seat not found!"));
+    public Seat getSeatById(int id) throws ResourceNotFoundException {
+        return this.seatRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("Seat not found!"));
     }
 
     @Override
@@ -49,13 +50,13 @@ public class SeatServiceImpl implements SeatService{
     }
 
     @Override
-    public void deleteSeat(int id) {
+    public void deleteSeat(int id) throws ResourceNotFoundException {
         Seat seatById = getSeatById(id);
         this.seatRepository.delete(seatById);
     }
 
     @Override
-    public Seat updateSeat(int id, SeatRequestDto seatRequestDto) {
+    public Seat updateSeat(int id, SeatRequestDto seatRequestDto) throws ResourceNotFoundException {
         Seat seatById = getSeatById(id);
         seatById.setName(seatRequestDto.getName());
         seatById.setSeatType(seatRequestDto.getSeatType());
